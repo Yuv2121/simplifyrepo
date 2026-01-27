@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Github, Clock, ChevronRight } from "lucide-react";
@@ -14,7 +15,7 @@ interface RecentScansProps {
   onSelectRepo: (url: string) => void;
 }
 
-export const RecentScans = ({ onSelectRepo }: RecentScansProps) => {
+export const RecentScans = forwardRef<HTMLDivElement, RecentScansProps>(({ onSelectRepo }, ref) => {
   const { data: scans, isLoading } = useQuery({
     queryKey: ["recent-scans"],
     queryFn: async () => {
@@ -64,6 +65,7 @@ export const RecentScans = ({ onSelectRepo }: RecentScansProps) => {
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.8, duration: 0.6 }}
@@ -106,4 +108,6 @@ export const RecentScans = ({ onSelectRepo }: RecentScansProps) => {
       </div>
     </motion.div>
   );
-};
+});
+
+RecentScans.displayName = "RecentScans";

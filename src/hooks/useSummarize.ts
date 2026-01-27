@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface SummaryResult {
@@ -17,6 +16,9 @@ const LOADING_STEPS = [
   "Summoning AI...",
   "Generating summary...",
 ];
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const useSummarize = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -41,14 +43,28 @@ export const useSummarize = () => {
     setLoadingStep(LOADING_STEPS[0]);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("summarize", {
-        body: { repoUrl },
+      // Use fetch with AbortController for timeout control (90 seconds for large repos)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/summarize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ repoUrl }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       clearInterval(stepInterval);
 
-      if (fnError) {
-        throw new Error(fnError.message);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || `Request failed with status ${response.status}`);
       }
 
       if (data?.error) {
@@ -65,7 +81,16 @@ export const useSummarize = () => {
 
       toast.success("Repository analyzed successfully!");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to analyze repository";
+      let errorMessage = "Failed to analyze repository";
+      
+      if (err instanceof Error) {
+        if (err.name === "AbortError") {
+          errorMessage = "Request timed out. The repository might be too large. Please try again.";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
