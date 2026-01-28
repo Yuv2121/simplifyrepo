@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SummaryResult {
   repoName: string;
@@ -18,7 +19,6 @@ const LOADING_STEPS = [
 ];
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export const useSummarize = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -43,6 +43,13 @@ export const useSummarize = () => {
     setLoadingStep(LOADING_STEPS[0]);
 
     try {
+      // Get current session for auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error("Please sign in to analyze repositories");
+      }
+
       // Use fetch with AbortController for timeout control (90 seconds for large repos)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 90000);
@@ -51,8 +58,7 @@ export const useSummarize = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ repoUrl }),
         signal: controller.signal,
