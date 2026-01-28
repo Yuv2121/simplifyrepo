@@ -1,4 +1,4 @@
 project_id = "pafaxfjugqnbgmcoaefg"
 
 [functions.summarize]
-verify_jwt = true
+verify_jwt = false
