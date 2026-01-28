@@ -21,6 +21,7 @@ export type Database = {
           repo_name: string
           repo_url: string
           summary: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -28,6 +29,7 @@ export type Database = {
           repo_name: string
           repo_url: string
           summary?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -35,6 +37,7 @@ export type Database = {
           repo_name?: string
           repo_url?: string
           summary?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

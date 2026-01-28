@@ -1,19 +1,33 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Github, Sparkles, Loader2 } from "lucide-react";
+import { Github, Sparkles, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface InputSectionProps {
   onSubmit: (url: string) => void;
   isLoading: boolean;
   loadingStep: string;
+  isAuthenticated: boolean;
+  authLoading: boolean;
 }
 
-export const InputSection = ({ onSubmit, isLoading, loadingStep }: InputSectionProps) => {
+export const InputSection = ({ 
+  onSubmit, 
+  isLoading, 
+  loadingStep, 
+  isAuthenticated,
+  authLoading 
+}: InputSectionProps) => {
   const [url, setUrl] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      navigate("/auth");
+      return;
+    }
     if (url.trim() && !isLoading) {
       onSubmit(url.trim());
     }
@@ -90,10 +104,17 @@ export const InputSection = ({ onSubmit, isLoading, loadingStep }: InputSectionP
             </div>
             <Button
               type="submit"
-              disabled={!url.trim() || isLoading}
+              disabled={(!url.trim() || isLoading) && isAuthenticated}
               className="h-14 px-8 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl transition-all glow-primary disabled:opacity-50 disabled:glow-primary/0"
             >
-              {isLoading ? (
+              {authLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : !isAuthenticated ? (
+                <span className="flex items-center gap-2">
+                  <LogIn className="w-5 h-5" />
+                  Sign in to Analyze
+                </span>
+              ) : isLoading ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Analyzing...

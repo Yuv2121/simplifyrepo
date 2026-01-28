@@ -185,7 +185,38 @@ serve(async (req) => {
   }
 
   try {
-    // Parse and validate request body
+    // ===== AUTHENTICATION CHECK =====
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required. Please sign in to use this feature." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create authenticated Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Validate user token using getClaims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Auth error:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired session. Please sign in again." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub as string;
+    console.log(`Authenticated user: ${userId}`);
+
+    // ===== REQUEST VALIDATION =====
     let requestBody: { repoUrl?: unknown };
     try {
       requestBody = await req.json();
@@ -328,12 +359,9 @@ Please analyze this repository and provide a comprehensive summary.`;
     const aiData = await aiResponse.json();
     const summary = aiData.choices?.[0]?.message?.content || "Unable to generate summary";
 
-    // Step 6: Save to database
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const { error: dbError } = await supabase.from("scans").insert({
+    // Step 6: Save to database using authenticated client (respects RLS)
+    const { error: dbError } = await authClient.from("scans").insert({
+      user_id: userId,
       repo_name: `${owner}/${repo}`,
       repo_url: `https://github.com/${owner}/${repo}`,
       summary: summary,

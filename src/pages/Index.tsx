@@ -4,10 +4,13 @@ import { InputSection } from "@/components/InputSection";
 import { ResultCard } from "@/components/ResultCard";
 import { RecentScans } from "@/components/RecentScans";
 import { BackgroundEffects } from "@/components/BackgroundEffects";
+import { UserMenu } from "@/components/UserMenu";
 import { useSummarize } from "@/hooks/useSummarize";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const { isLoading, loadingStep, result, error, summarize, reset } = useSummarize();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
   const handleSubmit = async (url: string) => {
@@ -28,6 +31,17 @@ const Index = () => {
     <div className="min-h-screen relative">
       <BackgroundEffects />
       
+      {/* Header with User Menu */}
+      <header className="relative z-20 border-b border-border/50 bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-xl font-bold text-foreground">Code</span>
+            <span className="text-xl font-bold text-primary">Simplify</span>
+          </div>
+          <UserMenu />
+        </div>
+      </header>
+      
       <div className="relative z-10 container mx-auto px-4 py-12 md:py-20">
         <AnimatePresence mode="wait">
           {!result ? (
@@ -42,6 +56,8 @@ const Index = () => {
                 onSubmit={handleSubmit}
                 isLoading={isLoading}
                 loadingStep={loadingStep}
+                isAuthenticated={isAuthenticated}
+                authLoading={authLoading}
               />
               
               {error && (
@@ -56,7 +72,7 @@ const Index = () => {
                 </motion.div>
               )}
 
-              {!isLoading && <RecentScans onSelectRepo={handleSelectRepo} />}
+              {!isLoading && isAuthenticated && <RecentScans onSelectRepo={handleSelectRepo} />}
             </motion.div>
           ) : (
             <motion.div
