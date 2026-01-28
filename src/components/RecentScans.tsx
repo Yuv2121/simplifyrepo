@@ -72,8 +72,8 @@ export const RecentScans = forwardRef<HTMLDivElement, RecentScansProps>(({ onSel
       className="w-full max-w-4xl mx-auto mt-16"
     >
       <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold text-foreground">Recent Scans</h3>
-        <p className="text-sm text-muted-foreground">See what others have analyzed</p>
+        <h3 className="text-lg font-semibold text-foreground">Your Recent Scans</h3>
+        <p className="text-sm text-muted-foreground">Quick access to your analysis history</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -100,7 +100,9 @@ async function fetchFileContent(owner: string, repo: string, path: string): Prom
     if (data.encoding === "base64" && data.content) {
       const decoded = atob(data.content.replace(/\n/g, ""));
       // Truncate if too large (max 5000 chars per file)
-      return decoded.length > 5000 ? decoded.substring(0, 5000) + "\n...[truncated]" : decoded;
+      const truncated = decoded.length > 5000 ? decoded.substring(0, 5000) + "\n...[truncated]" : decoded;
+      // Sanitize content to prevent prompt injection
+      return sanitizeFileContent(truncated);
     }
 
     return null;
@@ -108,6 +110,41 @@ async function fetchFileContent(owner: string, repo: string, path: string): Prom
     console.error(`Error fetching ${path}:`, error);
     return null;
   }
+}
+
+/**
+ * Sanitizes file content to prevent prompt injection attacks.
+ * Escapes sequences that could break out of markdown code blocks
+ * and removes common prompt injection patterns.
+ */
+function sanitizeFileContent(content: string): string {
+  return content
+    // Escape triple backticks to prevent breaking out of code blocks
+    .replace(/```/g, '\\`\\`\\`')
+    // Remove common system-level injection patterns
+    .replace(/\[SYSTEM\]/gi, '[BLOCKED]')
+    .replace(/\[INST\]/gi, '[BLOCKED]')
+    .replace(/<<SYS>>/gi, '[BLOCKED]')
+    .replace(/<\|system\|>/gi, '[BLOCKED]')
+    .replace(/<\|user\|>/gi, '[BLOCKED]')
+    .replace(/<\|assistant\|>/gi, '[BLOCKED]')
+    // Block common instruction override attempts
+    .replace(/ignore\s+(previous|all|above)\s+(instructions?|prompts?)/gi, '[BLOCKED]')
+    .replace(/disregard\s+(previous|all|above)\s+(instructions?|prompts?)/gi, '[BLOCKED]')
+    .replace(/forget\s+(previous|all|above)\s+(instructions?|prompts?)/gi, '[BLOCKED]')
+    .replace(/new\s+instructions?:/gi, '[BLOCKED]')
+    .replace(/override\s+instructions?/gi, '[BLOCKED]');
+}
+
+/**
+ * Sanitizes file path to prevent injection via path names
+ */
+function sanitizePath(path: string): string {
+  // Remove any characters that could break markdown or inject content
+  return path
+    .replace(/[`\[\]<>]/g, '')
+    .replace(/\.\.\//g, '')
+    .substring(0, 200); // Limit path length
 }
 
 interface RepoUrlValidation {
