@@ -110,23 +110,72 @@ async function fetchFileContent(owner: string, repo: string, path: string): Prom
   }
 }
 
-function parseRepoUrl(url: string): { owner: string; repo: string } | null {
-  // Handle various GitHub URL formats
+interface RepoUrlValidation {
+  isValid: boolean;
+  error?: string;
+  parsed?: { owner: string; repo: string };
+}
+
+function validateAndParseRepoUrl(url: string): RepoUrlValidation {
+  // Length validation - prevent DoS via large input
+  if (!url || typeof url !== 'string') {
+    return { isValid: false, error: 'Repository URL is required' };
+  }
+
+  if (url.length > 500) {
+    return { isValid: false, error: 'URL is too long' };
+  }
+
+  // Trim and normalize
+  const trimmedUrl = url.trim();
+
+  // Parse GitHub URL formats
   const patterns = [
-    /github\.com\/([^\/]+)\/([^\/\?#]+)/,
-    /^([^\/]+)\/([^\/]+)$/,
+    /^https?:\/\/github\.com\/([^\/]+)\/([^\/\?#]+)/,
+    /^github\.com\/([^\/]+)\/([^\/\?#]+)/,
+    /^([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_.-]+)$/,
   ];
 
+  let owner: string | null = null;
+  let repo: string | null = null;
+
   for (const pattern of patterns) {
-    const match = url.match(pattern);
+    const match = trimmedUrl.match(pattern);
     if (match) {
-      // Remove .git suffix if present
-      const repo = match[2].replace(/\.git$/, "");
-      return { owner: match[1], repo };
+      owner = match[1];
+      repo = match[2].replace(/\.git$/, "");
+      break;
     }
   }
 
-  return null;
+  if (!owner || !repo) {
+    return { isValid: false, error: 'Invalid GitHub repository URL. Use format: https://github.com/owner/repo' };
+  }
+
+  // Validate owner name (GitHub allows alphanumeric, hyphen; max 39 chars)
+  const validOwnerPattern = /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/;
+  if (!validOwnerPattern.test(owner) || owner.length > 39) {
+    return { isValid: false, error: 'Invalid repository owner name' };
+  }
+
+  // Validate repo name (GitHub allows alphanumeric, hyphen, underscore, dot; max 100 chars)
+  const validRepoPattern = /^[a-zA-Z0-9_.-]+$/;
+  if (!validRepoPattern.test(repo) || repo.length > 100) {
+    return { isValid: false, error: 'Invalid repository name' };
+  }
+
+  // Check for path traversal attempts
+  if (owner.includes('..') || repo.includes('..')) {
+    return { isValid: false, error: 'Invalid characters in repository path' };
+  }
+
+  // Prevent reserved names that could cause issues
+  const reservedNames = ['api', 'raw', 'gist', 'enterprise', 'settings', 'organizations'];
+  if (reservedNames.includes(owner.toLowerCase())) {
+    return { isValid: false, error: 'Invalid repository owner' };
+  }
+
+  return { isValid: true, parsed: { owner, repo } };
 }
 
 serve(async (req) => {
@@ -136,25 +185,37 @@ serve(async (req) => {
   }
 
   try {
-    const { repoUrl } = await req.json();
-
-    if (!repoUrl) {
+    // Parse and validate request body
+    let requestBody: { repoUrl?: unknown };
+    try {
+      requestBody = await req.json();
+    } catch {
       return new Response(
-        JSON.stringify({ error: "Repository URL is required" }),
+        JSON.stringify({ error: "Invalid request body" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Parse the repository URL
-    const parsed = parseRepoUrl(repoUrl);
-    if (!parsed) {
+    const { repoUrl } = requestBody;
+
+    // Type check and validate the URL
+    if (!repoUrl || typeof repoUrl !== 'string') {
       return new Response(
-        JSON.stringify({ error: "Invalid GitHub repository URL. Please use format: https://github.com/owner/repo" }),
+        JSON.stringify({ error: "Repository URL is required and must be a string" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { owner, repo } = parsed;
+    // Comprehensive URL validation
+    const validation = validateAndParseRepoUrl(repoUrl);
+    if (!validation.isValid || !validation.parsed) {
+      return new Response(
+        JSON.stringify({ error: validation.error || "Invalid GitHub repository URL" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { owner, repo } = validation.parsed;
     console.log(`Analyzing repository: ${owner}/${repo}`);
 
     // Step 1: Fetch repository tree
