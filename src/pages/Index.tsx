@@ -5,6 +5,7 @@ import { ResultCard } from "@/components/ResultCard";
 import { RecentScans } from "@/components/RecentScans";
 import { BackgroundEffects } from "@/components/BackgroundEffects";
 import { UserMenu } from "@/components/UserMenu";
+import { ChatBot } from "@/components/ChatBot";
 import { useSummarize } from "@/hooks/useSummarize";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -107,6 +108,11 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* AI Chatbot */}
+      <ChatBot 
+        repoContext={result ? { repoName: result.repoName, summary: result.summary } : undefined} 
+      />
     </div>
   );
 };
