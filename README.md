@@ -1,73 +1,106 @@
-# Welcome to your Lovable project
+# 🚀 SimplifyRepo
 
-## Project info
+**Decode complex codebases in seconds. Turn overwhelming repositories into clear, actionable insights.**
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/yuv2121/simplifyrepo)
+[![Built with Lovable](https://img.shields.io/badge/Built%20with-Lovable-ff69b4)](https://lovable.dev)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 📖 Overview
 
-**Use Lovable**
+**SimplifyRepo** is an advanced repository analysis tool designed to help developers, architects, and technical leads quickly understand unfamiliar codebases. By leveraging AI-driven summarization and interactive visualizations, it bridges the gap between raw source code and architectural comprehension.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Whether you're onboarding to a new project or auditing a legacy system, SimplifyRepo provides a high-level summary, security insights, and a structured "Pro Mode" for deep-dive technical explorations.
 
-Changes made via Lovable will be committed automatically to this repo.
+## ✨ Key Features
 
-**Use your preferred IDE**
+*   **🔍 AI Repository Summarization**: Instantly generate high-level overviews of any GitHub repository.
+*   **🤖 Interactive ChatBot**: Ask specific questions about the codebase structure, logic, or dependencies.
+*   **🛡️ Security Gate**: Integrated security analysis to identify potential vulnerabilities within the repo.
+*   **📊 Pro-Mode Visualizer**: Generate Mermaid diagrams and flowcharts to visualize complex architectural flows.
+*   **📝 Wiki Generator**: Automatically draft documentation and wikis based on analyzed source code.
+*   **🖥️ Terminal Log Interface**: Real-time feedback and processing logs for a developer-centric experience.
+*   **🎨 Glassmorphic UI**: A modern, sleek interface built with Tailwind CSS and Framer Motion for smooth transitions.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🛠 Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+*   **Frontend**: [React 18](https://reactjs.org/) with [TypeScript](https://www.typescriptlang.org/)
+*   **Build Tool**: [Vite](https://vitejs.dev/)
+*   **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
+*   **Animations**: [Framer Motion](https://www.framer.com/motion/)
+*   **Backend/Database**: [Supabase](https://supabase.com/) (Edge Functions & Auth)
+*   **Visualizations**: [Mermaid.js](https://mermaid.js.org/) & [Recharts](https://recharts.org/)
+*   **State Management**: [TanStack Query (React Query)](https://tanstack.com/query/latest)
 
-Follow these steps:
+## ⚙️ Prerequisites
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Before you begin, ensure you have the following installed:
+*   [Node.js](https://nodejs.org/) (v18.0.0 or higher)
+*   [npm](https://www.npmjs.com/) or [Bun](https://bun.sh/)
+*   A [Supabase](https://supabase.com/) account for backend functions/auth.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🚀 Installation & Setup
 
-# Step 3: Install the necessary dependencies.
-npm i
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/yuv2121/simplifyrepo.git
+    cd simplifyrepo
+    ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # OR if you prefer Bun
+    bun install
+    ```
+
+3.  **Environment Configuration:**
+    Create a `.env` file in the root directory and add your Supabase credentials:
+    ```env
+    VITE_SUPABASE_URL=your_supabase_project_url
+    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+    ```
+
+4.  **Start the development server:**
+    ```bash
+    npm run dev
+    ```
+    The application will be available at `http://localhost:8080`.
+
+## 📂 Project Structure
+
+```text
+src/
+├── components/          # Reusable UI components (shadcn/ui)
+│   ├── pro-mode/        # Advanced analysis features
+│   └── ui/              # Base primitive components
+├── hooks/               # Custom React hooks (Auth, Chat, Analyze)
+├── integrations/        # Supabase client and types
+├── pages/               # Main application views (Auth, Dashboard)
+├── supabase/            # Edge functions for AI processing
+└── lib/                 # Utility functions and formatting
 ```
 
-**Edit a file directly in GitHub**
+## 🛠 Usage Examples
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Analyzing a Repo
+1. Sign in via the **Auth** page.
+2. Paste a GitHub repository URL into the main input field.
+3. Click **Summarize** to get a breakdown of the tech stack and purpose.
 
-**Use GitHub Codespaces**
+### Using Pro Mode
+1. Toggle **Pro Mode** from the dashboard.
+2. Select **Visualizer** to generate architectural diagrams.
+3. Use the **Wiki Generator** to export markdown-ready documentation for your team.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
 
-This project is built with:
+## 📄 License : Built in INDIA with pride. YuvrajJoshi.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Distributed under the MIT License. See `LICENSE` for more information.
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**SimplifyRepo** — *Complexity, Simplified.*
