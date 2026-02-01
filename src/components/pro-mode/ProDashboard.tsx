@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Network, FileCode, ShieldCheck, Link2, AlertCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { Network, FileCode, ShieldCheck, Link2, AlertCircle, Sparkles, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FeatureCard } from "./FeatureCard";
@@ -8,6 +8,7 @@ import { VisualizerModal } from "./VisualizerModal";
 import { WikiGenerator } from "./WikiGenerator";
 import { SecurityGate } from "./SecurityGate";
 import { TerminalLog } from "./TerminalLog";
+import { OverallReport } from "./OverallReport";
 import { useProAnalyze } from "@/hooks/useProAnalyze";
 
 interface ProDashboardProps {
@@ -17,18 +18,21 @@ interface ProDashboardProps {
 export const ProDashboard = ({ initialRepoUrl = "" }: ProDashboardProps) => {
   const [repoUrl, setRepoUrl] = useState(initialRepoUrl);
   const [isPrivateModeActive, setIsPrivateModeActive] = useState(false);
-  
-  // Modal states
-  const [showVisualizer, setShowVisualizer] = useState(false);
-  const [showWiki, setShowWiki] = useState(false);
   const [showSecurityGate, setShowSecurityGate] = useState(false);
 
   const {
     isLoading,
     currentMode,
     result,
+    reportResult,
     logs,
     analyze,
+    showVisualizerModal,
+    showWikiModal,
+    showReportModal,
+    closeVisualizerModal,
+    closeWikiModal,
+    closeReportModal,
   } = useProAnalyze();
 
   const handleVisualize = useCallback(() => {
@@ -41,9 +45,10 @@ export const ProDashboard = ({ initialRepoUrl = "" }: ProDashboardProps) => {
     analyze(repoUrl, "wiki");
   }, [repoUrl, analyze]);
 
-  // Open modals when results are ready
-  const visualizerResult = currentMode === "visualize" && result ? result : null;
-  const wikiResult = currentMode === "wiki" && result ? result : null;
+  const handleGenerateReport = useCallback(() => {
+    if (!repoUrl.trim()) return;
+    analyze(repoUrl, "report");
+  }, [repoUrl, analyze]);
 
   return (
     <motion.div
@@ -68,7 +73,7 @@ export const ProDashboard = ({ initialRepoUrl = "" }: ProDashboardProps) => {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Context Bar */}
+        {/* Context Bar with Fetch Button */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -94,6 +99,25 @@ export const ProDashboard = ({ initialRepoUrl = "" }: ProDashboardProps) => {
                     className="pl-12 h-12 bg-slate-800/50 border-slate-700 font-mono text-sm focus:border-primary"
                   />
                 </div>
+                
+                {/* Generate Complete Report Button */}
+                <Button
+                  onClick={handleGenerateReport}
+                  disabled={!repoUrl.trim() || isLoading}
+                  className="h-12 px-6 bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-primary-foreground font-semibold shadow-lg shadow-primary/30"
+                >
+                  {isLoading && currentMode === "report" ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Complete Report
+                    </>
+                  )}
+                </Button>
                 
                 {isPrivateModeActive && (
                   <motion.div
@@ -186,17 +210,23 @@ export const ProDashboard = ({ initialRepoUrl = "" }: ProDashboardProps) => {
 
       {/* Modals */}
       <VisualizerModal
-        isOpen={showVisualizer || !!visualizerResult}
-        onClose={() => setShowVisualizer(false)}
-        mermaidCode={visualizerResult?.content || ""}
-        repoName={visualizerResult?.repoName || ""}
+        isOpen={showVisualizerModal}
+        onClose={closeVisualizerModal}
+        mermaidCode={result?.content || ""}
+        repoName={result?.repoName || ""}
       />
 
       <WikiGenerator
-        isOpen={showWiki || !!wikiResult}
-        onClose={() => setShowWiki(false)}
-        markdown={wikiResult?.content || ""}
-        repoName={wikiResult?.repoName || ""}
+        isOpen={showWikiModal}
+        onClose={closeWikiModal}
+        markdown={result?.content || ""}
+        repoName={result?.repoName || ""}
+      />
+
+      <OverallReport
+        isOpen={showReportModal}
+        onClose={closeReportModal}
+        report={reportResult}
       />
 
       <SecurityGate

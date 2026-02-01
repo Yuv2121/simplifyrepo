@@ -41,6 +41,13 @@ export const WikiGenerator = ({
     toast.success("README.md downloaded!");
   };
 
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -48,8 +55,8 @@ export const WikiGenerator = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+          onClick={handleClose}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -97,8 +104,8 @@ export const WikiGenerator = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={onClose}
-                  className="text-muted-foreground hover:text-destructive"
+                  onClick={handleClose}
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                 >
                   <X className="w-5 h-5" />
                 </Button>
