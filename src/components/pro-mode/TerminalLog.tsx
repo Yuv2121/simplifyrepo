@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Terminal } from "lucide-react";
+import { Box } from "lucide-react";
 interface TerminalLogProps {
   logs: string[];
 }
@@ -22,7 +22,7 @@ export const TerminalLog = ({
   }} className="glass-card rounded-xl border border-primary/20 overflow-hidden">
       {/* Terminal Header */}
       <div className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 border-b border-primary/20">
-        <Terminal className="w-4 h-4 text-primary" />
+        <Box className="w-4 h-4 text-primary" />
         <span className="text-xs font-mono text-primary/80">Terminal</span>
         <div className="flex gap-1.5 ml-auto">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
