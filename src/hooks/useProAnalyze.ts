@@ -2,11 +2,18 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-type ProMode = "visualize" | "wiki" | "summary";
+type ProMode = "visualize" | "wiki" | "summary" | "report";
 
 interface ProResult {
   repoName: string;
   content: string;
+}
+
+interface ReportResult {
+  repoName: string;
+  architecture: string;
+  readme: string;
+  summary: string;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -15,23 +22,62 @@ export const useProAnalyze = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentMode, setCurrentMode] = useState<ProMode | null>(null);
   const [result, setResult] = useState<ProResult | null>(null);
+  const [reportResult, setReportResult] = useState<ReportResult | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
+  const [showVisualizerModal, setShowVisualizerModal] = useState(false);
+  const [showWikiModal, setShowWikiModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const addLog = useCallback((message: string) => {
     setLogs((prev) => [...prev, message]);
   }, []);
 
+  const fetchWithMode = async (repoUrl: string, mode: string, session: { access_token: string }) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/summarize`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ repoUrl, mode }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error || `Request failed with status ${response.status}`);
+    }
+
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    return data;
+  };
+
   const analyze = useCallback(async (repoUrl: string, mode: ProMode) => {
     setIsLoading(true);
     setCurrentMode(mode);
     setResult(null);
+    setReportResult(null);
     setLogs([]);
 
-    // Terminal log simulation
-    addLog(`Initializing ${mode === "visualize" ? "Visualizer" : "Wiki Generator"}...`);
+    const modeLabels: Record<ProMode, string> = {
+      visualize: "Visualizer",
+      wiki: "Wiki Generator",
+      summary: "Summarizer",
+      report: "Complete Report Generator",
+    };
+
+    addLog(`Initializing ${modeLabels[mode]}...`);
     
     try {
-      // Get session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.access_token) {
@@ -46,48 +92,63 @@ export const useProAnalyze = () => {
       
       addLog("Fetching repository structure...");
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      if (mode === "report") {
+        // Fetch all three in parallel for complete report
+        addLog("Generating architecture diagram...");
+        const archPromise = fetchWithMode(repoUrl, "visualize", session);
+        
+        addLog("Creating professional README...");
+        const wikiPromise = fetchWithMode(repoUrl, "wiki", session);
+        
+        addLog("Analyzing repository structure...");
+        const summaryPromise = fetchWithMode(repoUrl, "summary", session);
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/summarize`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ repoUrl, mode }),
-        signal: controller.signal,
-      });
+        const [archData, wikiData, summaryData] = await Promise.all([
+          archPromise,
+          wikiPromise,
+          summaryPromise,
+        ]);
 
-      clearTimeout(timeoutId);
+        addLog("Compiling complete report...");
+        await new Promise((r) => setTimeout(r, 500));
 
-      addLog("Parsing response...");
+        addLog("✓ Complete analysis finished!");
 
-      const data = await response.json();
+        setReportResult({
+          repoName: archData.repoName,
+          architecture: archData.summary,
+          readme: wikiData.summary,
+          summary: summaryData.summary,
+        });
 
-      if (!response.ok) {
-        throw new Error(data?.error || `Request failed with status ${response.status}`);
+        setShowReportModal(true);
+        toast.success("Complete report generated successfully!");
+      } else {
+        const data = await fetchWithMode(repoUrl, mode, session);
+
+        addLog("Parsing response...");
+        addLog(mode === "visualize" ? "Rendering topology..." : "Compiling documentation...");
+        await new Promise((r) => setTimeout(r, 500));
+
+        addLog("✓ Process complete!");
+
+        setResult({
+          repoName: data.repoName,
+          content: data.summary,
+        });
+
+        if (mode === "visualize") {
+          setShowVisualizerModal(true);
+        } else if (mode === "wiki") {
+          setShowWikiModal(true);
+        }
+
+        toast.success(
+          mode === "visualize" 
+            ? "Architecture map generated!" 
+            : "README.md generated!"
+        );
       }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      addLog(mode === "visualize" ? "Rendering topology..." : "Compiling documentation...");
-      await new Promise((r) => setTimeout(r, 500));
-
-      addLog("✓ Process complete!");
-
-      setResult({
-        repoName: data.repoName,
-        content: data.summary,
-      });
-
-      toast.success(
-        mode === "visualize" 
-          ? "Architecture map generated!" 
-          : "README.md generated!"
-      );
 
     } catch (err) {
       let errorMessage = "Analysis failed";
@@ -107,18 +168,47 @@ export const useProAnalyze = () => {
     }
   }, [addLog]);
 
-  const reset = useCallback(() => {
+  const closeVisualizerModal = useCallback(() => {
+    setShowVisualizerModal(false);
     setResult(null);
     setCurrentMode(null);
+  }, []);
+
+  const closeWikiModal = useCallback(() => {
+    setShowWikiModal(false);
+    setResult(null);
+    setCurrentMode(null);
+  }, []);
+
+  const closeReportModal = useCallback(() => {
+    setShowReportModal(false);
+    setReportResult(null);
+    setCurrentMode(null);
+  }, []);
+
+  const reset = useCallback(() => {
+    setResult(null);
+    setReportResult(null);
+    setCurrentMode(null);
     setLogs([]);
+    setShowVisualizerModal(false);
+    setShowWikiModal(false);
+    setShowReportModal(false);
   }, []);
 
   return {
     isLoading,
     currentMode,
     result,
+    reportResult,
     logs,
     analyze,
     reset,
+    showVisualizerModal,
+    showWikiModal,
+    showReportModal,
+    closeVisualizerModal,
+    closeWikiModal,
+    closeReportModal,
   };
 };

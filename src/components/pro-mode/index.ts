@@ -5,3 +5,4 @@ export { VisualizerModal } from "./VisualizerModal";
 export { WikiGenerator } from "./WikiGenerator";
 export { SecurityGate } from "./SecurityGate";
 export { TerminalLog } from "./TerminalLog";
+export { OverallReport } from "./OverallReport";
