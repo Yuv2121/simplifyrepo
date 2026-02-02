@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Network, FileCode, ShieldCheck, Link2, AlertCircle, Sparkles, Loader2 } from "lucide-react";
+import { Network, FileCode, ShieldCheck, Link2, AlertCircle, Sparkles, Loader2, Microscope } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FeatureCard } from "./FeatureCard";
@@ -16,9 +17,15 @@ interface ProDashboardProps {
 }
 
 export const ProDashboard = ({ initialRepoUrl = "" }: ProDashboardProps) => {
+  const navigate = useNavigate();
   const [repoUrl, setRepoUrl] = useState(initialRepoUrl);
   const [isPrivateModeActive, setIsPrivateModeActive] = useState(false);
   const [showSecurityGate, setShowSecurityGate] = useState(false);
+
+  const handleForensicLab = useCallback(() => {
+    const repoParam = repoUrl.trim() ? `?repo=${encodeURIComponent(repoUrl.trim())}` : "";
+    navigate(`/forensic${repoParam}`);
+  }, [repoUrl, navigate]);
 
   const {
     isLoading,
@@ -150,7 +157,7 @@ export const ProDashboard = ({ initialRepoUrl = "" }: ProDashboardProps) => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
         >
           {/* Card A: Visualizer */}
           <FeatureCard
@@ -179,6 +186,15 @@ export const ProDashboard = ({ initialRepoUrl = "" }: ProDashboardProps) => {
             description="Unlock private repository analysis with secure enterprise authentication and encrypted tunnels."
             onClick={() => setShowSecurityGate(true)}
             badge={isPrivateModeActive ? "Active" : undefined}
+          />
+
+          {/* Card D: Code Forensics */}
+          <FeatureCard
+            icon={Microscope}
+            title="Code Forensics"
+            description="Deep file-by-file analysis with vulnerability scanning, logic flow mapping, and AI-powered code explanations."
+            onClick={handleForensicLab}
+            disabled={false}
           />
         </motion.div>
 

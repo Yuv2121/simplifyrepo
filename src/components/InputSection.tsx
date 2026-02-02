@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Github, Sparkles, Loader2, LogIn } from "lucide-react";
+import { Github, Sparkles, Loader2, LogIn, Microscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 interface InputSectionProps {
   onSubmit: (url: string) => void;
   isLoading: boolean;
@@ -10,6 +11,7 @@ interface InputSectionProps {
   isAuthenticated: boolean;
   authLoading: boolean;
 }
+
 export const InputSection = ({
   onSubmit,
   isLoading,
@@ -19,6 +21,7 @@ export const InputSection = ({
 }: InputSectionProps) => {
   const [url, setUrl] = useState("");
   const navigate = useNavigate();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
@@ -28,6 +31,15 @@ export const InputSection = ({
     if (url.trim() && !isLoading) {
       onSubmit(url.trim());
     }
+  };
+
+  const handleForensicLab = () => {
+    if (!isAuthenticated) {
+      navigate("/auth");
+      return;
+    }
+    const repoParam = url.trim() ? `?repo=${encodeURIComponent(url.trim())}` : "";
+    navigate(`/forensic${repoParam}`);
   };
   const loadingSteps = ["Fetching repo tree...", "Reading config files...", "Analyzing structure...", "Summoning AI...", "Generating summary..."];
   return <motion.div initial={{
@@ -100,17 +112,41 @@ export const InputSection = ({
               <Github className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input type="text" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://github.com/owner/repository" disabled={isLoading} className="w-full h-14 pl-12 pr-4 bg-background/50 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all disabled:opacity-50" />
             </div>
-            <Button type="submit" disabled={(!url.trim() || isLoading) && isAuthenticated} className="h-14 px-8 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl transition-all glow-primary disabled:opacity-50 disabled:glow-primary/0">
-              {authLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : !isAuthenticated ? <span className="flex items-center gap-2">
+            <Button 
+              type="submit" 
+              disabled={(!url.trim() || isLoading) && isAuthenticated} 
+              className="h-14 px-8 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl transition-all glow-primary disabled:opacity-50 disabled:glow-primary/0"
+            >
+              {authLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : !isAuthenticated ? (
+                <span className="flex items-center gap-2">
                   <LogIn className="w-5 h-5" />
                   Sign in to Analyze
-                </span> : isLoading ? <span className="flex items-center gap-2">
+                </span>
+              ) : isLoading ? (
+                <span className="flex items-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Analyzing...
-                </span> : <span className="flex items-center gap-2">
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5" />
                   Simplify
-                </span>}
+                </span>
+              )}
+            </Button>
+            
+            {/* Forensic Lab Button */}
+            <Button 
+              type="button"
+              onClick={handleForensicLab}
+              disabled={isLoading}
+              variant="outline"
+              className="h-14 px-6 text-base font-semibold rounded-xl border-2 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400 transition-all disabled:opacity-50"
+            >
+              <Microscope className="w-5 h-5 mr-2" />
+              🔍 Forensic Lab
             </Button>
           </div>
         </div>
