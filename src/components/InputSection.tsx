@@ -148,6 +148,18 @@ export const InputSection = ({
               <Microscope className="w-5 h-5 mr-2" />
               🔍 Forensic Lab
             </Button>
+
+            {/* Elite Dashboard Button */}
+            <Button 
+              type="button"
+              onClick={() => navigate("/elite-dashboard")}
+              className="h-14 px-6 text-base font-semibold rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 border-2 border-amber-500/30 text-amber-400 hover:border-amber-400 hover:shadow-lg hover:shadow-amber-500/20 transition-all relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="relative flex items-center gap-2">
+                👑 SimplifyRepo ELITE
+              </span>
+            </Button>
           </div>
         </div>
       </motion.form>
